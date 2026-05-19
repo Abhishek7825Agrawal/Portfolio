@@ -2,6 +2,21 @@
    BEAST PORTFOLIO - UPGRADED SCRIPT
    ============================================= */
 
+/* --- Futuristic Intro Screen Logic --- */
+window.addEventListener('load', () => {
+    const introScreen = document.getElementById('intro-screen');
+    // Give it enough time to finish the typing and loading bar (about 2.5s)
+    setTimeout(() => {
+        if(introScreen) introScreen.classList.add('hide');
+        document.body.classList.remove('no-scroll');
+        
+        // Trigger initial scroll reveal check if needed
+        if (typeof revealObs !== 'undefined' && typeof revealEls !== 'undefined') {
+            revealEls.forEach(el => revealObs.observe(el));
+        }
+    }, 2800);
+});
+
 /* --- Particles.js --- */
 if (typeof particlesJS !== "undefined") {
     particlesJS("particles-js", {
@@ -60,6 +75,30 @@ document.addEventListener('mousemove', e => {
     mouseY = e.clientY;
 });
 
+/* Mobile Touch Support for Liquid Trail */
+document.addEventListener('touchmove', e => {
+    if (e.touches.length > 0) {
+        mouseX = e.touches[0].clientX;
+        mouseY = e.touches[0].clientY;
+    }
+}, { passive: true });
+
+document.addEventListener('touchstart', e => {
+    if (e.touches.length > 0) {
+        mouseX = e.touches[0].clientX;
+        mouseY = e.touches[0].clientY;
+        // Instantly snap the cursor to the touch point so it doesn't drag across the screen
+        cursorX = mouseX;
+        cursorY = mouseY;
+        if (tubeNodes && tubeNodes.length > 0) {
+            for (let i = 0; i < NUM_NODES; i++) {
+                tubeNodes[i].x = mouseX;
+                tubeNodes[i].y = mouseY;
+            }
+        }
+    }
+}, { passive: true });
+
 let isHovering = false;
 let currentPrimary = '#00f2fe';
 let currentSecondary = '#BD00FF';
@@ -90,15 +129,16 @@ function animateCursor() {
                 
                 ctx.beginPath();
                 // Draw overlapping filled circles instead of lines. 
-                // This guarantees perfect smoothness and creates a beautiful dotted trail if moved very fast.
-                let radius = 6 * Math.pow(progress, 1.5); 
+                // Increased radius for the liquid gooey effect.
+                let radius = 18 * Math.pow(progress, 1.2); 
                 if (radius > 0.1) {
                     ctx.arc(tubeNodes[i].x, tubeNodes[i].y, radius, 0, Math.PI * 2);
                     
                     ctx.fillStyle = currentPrimary;
-                    ctx.shadowBlur = 12 * progress;
+                    // Lowered shadow to not interfere with gooey filter alpha
+                    ctx.shadowBlur = 5 * progress;
                     ctx.shadowColor = currentPrimary;
-                    ctx.globalAlpha = progress * 0.9;
+                    ctx.globalAlpha = progress;
                     
                     ctx.fill();
                 }
@@ -243,17 +283,31 @@ document.querySelectorAll('.magnetic-btn').forEach(btn => {
     });
 });
 
-/* --- Navbar Scroll Effect --- */
+/* --- Navbar Scroll Effect & Auto-Hide --- */
+let lastScrollY = window.scrollY;
 window.addEventListener('scroll', () => {
-    const nav = document.querySelector('nav .nav-content');
-    if (window.scrollY > 50) {
-        nav.style.background = 'rgba(3,0,20,0.95)';
-        nav.style.boxShadow = '0 10px 30px rgba(0,0,0,0.5)';
-        nav.style.borderColor = 'rgba(0,242,254,0.2)';
+    const navBar = document.querySelector('nav');
+    const navContent = document.querySelector('nav .nav-content');
+    
+    // Auto-hide logic
+    if (window.scrollY > lastScrollY && window.scrollY > 100) {
+        // Scrolling down
+        navBar.classList.add('nav-hidden');
     } else {
-        nav.style.background = 'rgba(3,0,20,0.6)';
-        nav.style.boxShadow = 'none';
-        nav.style.borderColor = 'var(--glass-border)';
+        // Scrolling up or at top
+        navBar.classList.remove('nav-hidden');
+    }
+    lastScrollY = window.scrollY;
+
+    // Background styling
+    if (window.scrollY > 50) {
+        navContent.style.background = 'rgba(3,0,20,0.95)';
+        navContent.style.boxShadow = '0 10px 30px rgba(0,0,0,0.5)';
+        navContent.style.borderColor = 'rgba(0,242,254,0.2)';
+    } else {
+        navContent.style.background = 'rgba(3,0,20,0.6)';
+        navContent.style.boxShadow = 'none';
+        navContent.style.borderColor = 'var(--glass-border)';
     }
 });
 
@@ -345,6 +399,19 @@ const robotCompanion = document.getElementById('robot-companion');
 let robotTimeout;
 let currentRobotX = -100;
 
+// Intercept WhatsApp links so the robot can animate before opening the link
+document.querySelectorAll('a[href*="wa.me"]').forEach(link => {
+    link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const targetUrl = link.href;
+        
+        // Move is 100ms, tap animation starts after 100ms. Tap takes 400ms. Total 500ms.
+        setTimeout(() => {
+            window.open(targetUrl, '_blank');
+        }, 450);
+    });
+});
+
 document.addEventListener('click', (e) => {
     if (!robotCompanion) return;
     
@@ -372,7 +439,7 @@ document.addEventListener('click', (e) => {
 
     clearTimeout(robotTimeout);
     
-    // Stop walking and tap after transition finishes (600ms matching CSS)
+    // Stop walking and tap after transition finishes (100ms matching new CSS)
     robotTimeout = setTimeout(() => {
         robotCompanion.classList.remove('robot-walking');
         robotCompanion.classList.add('robot-tapping');
@@ -381,5 +448,5 @@ document.addEventListener('click', (e) => {
         setTimeout(() => {
             robotCompanion.style.opacity = '0';
         }, 2500);
-    }, 600);
+    }, 100);
 });

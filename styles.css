@@ -59,10 +59,15 @@ body {
     will-change: transform;
 }
 
+@media (pointer: coarse) {
+    .cursor { display: none !important; }
+}
+
 .cursor.hover {
     width: 70px;
     height: 70px;
     background: #fff;
+    box-shadow: 0 0 20px #fff, 0 0 40px var(--primary-color), 0 0 60px var(--secondary-color);
 }
 
 /* --- Interactive Particle Background --- */
@@ -140,7 +145,10 @@ a { text-decoration: none; color: inherit; }
 
 /* --- Navigation --- */
 nav {
-    position: fixed; top: 0; width: 100%; z-index: 1000; padding: 15px 5%; transition: 0.4s;
+    position: fixed; top: 0; width: 100%; z-index: 1000; padding: 15px 5%; transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), padding 0.4s;
+}
+nav.nav-hidden {
+    transform: translateY(-100%);
 }
 .nav-content {
     max-width: 1300px; margin: 0 auto;
@@ -403,12 +411,34 @@ footer { padding: 40px; border-top: 1px solid var(--glass-border); text-align: c
     box-shadow: 0 0 10px var(--primary-color);
 }
 
-/* Tube Canvas Trail */
+/* Tube Canvas Trail with Liquid Gooey Effect */
 #tube-canvas {
     position: fixed; top: 0; left: 0;
     width: 100vw; height: 100vh;
     pointer-events: none;
     z-index: 9998;
+    filter: url('#goo'); /* Applies the liquid/water effect */
+}
+
+/* Cyberpunk Grid Overlay */
+.cyber-grid {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    pointer-events: none;
+    z-index: -1;
+    background-image: 
+        linear-gradient(rgba(0, 242, 254, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 242, 254, 0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    transform: perspective(500px) rotateX(60deg) translateY(-100px) translateZ(-200px);
+    animation: gridMove 15s linear infinite;
+    opacity: 0.6;
+}
+
+@keyframes gridMove {
+    0% { transform: perspective(500px) rotateX(60deg) translateY(0) translateZ(-200px); }
+    100% { transform: perspective(500px) rotateX(60deg) translateY(40px) translateZ(-200px); }
 }
 
 /* Robot Companion */
@@ -419,7 +449,7 @@ footer { padding: 40px; border-top: 1px solid var(--glass-border); text-align: c
     color: var(--primary-color);
     z-index: 10000;
     pointer-events: none;
-    transition: top 0.6s cubic-bezier(0.25, 1, 0.5, 1), left 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+    transition: top 0.1s cubic-bezier(0.25, 1, 0.5, 1), left 0.1s cubic-bezier(0.25, 1, 0.5, 1);
     filter: drop-shadow(0 0 15px var(--primary-color));
     opacity: 0;
 }
@@ -699,4 +729,103 @@ footer { padding: 40px; border-top: 1px solid var(--glass-border); text-align: c
     .stat-item .stat-num { font-size: 2rem; }
     .hero-top-badges { flex-direction: column; align-items: flex-start; }
     .whatsapp-float { bottom: 20px; right: 20px; width: 52px; height: 52px; font-size: 1.5rem; }
+}
+
+/* --- Futuristic Intro Screen --- */
+body.no-scroll { overflow: hidden; }
+
+#intro-screen {
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    background: #030014;
+    z-index: 999999;
+    display: flex; justify-content: center; align-items: center;
+    transition: transform 0.8s cubic-bezier(0.77, 0, 0.175, 1), opacity 0.8s ease;
+}
+
+#intro-screen.hide {
+    transform: translateY(-100%);
+    opacity: 0;
+    pointer-events: none;
+}
+
+.intro-content {
+    text-align: center;
+    display: flex; flex-direction: column; align-items: center;
+}
+
+.intro-robot {
+    font-size: 6rem;
+    color: var(--primary-color);
+    position: relative;
+    margin-bottom: 20px;
+    animation: robotWaveIntro 2.5s ease-in-out infinite;
+    filter: drop-shadow(0 0 20px var(--primary-color));
+    transform-origin: bottom center;
+}
+
+.robot-scan-line {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 5px;
+    background: var(--accent-color);
+    box-shadow: 0 0 10px var(--accent-color);
+    animation: scanLine 1.5s linear infinite;
+    opacity: 0.8;
+}
+
+@keyframes robotWaveIntro {
+    0% { transform: translateY(0) rotate(0deg); }
+    25% { transform: translateY(-10px) rotate(-15deg); }
+    50% { transform: translateY(0) rotate(10deg); }
+    75% { transform: translateY(-10px) rotate(-15deg); }
+    100% { transform: translateY(0) rotate(0deg); }
+}
+
+@keyframes scanLine {
+    0% { top: 0; }
+    100% { top: 100%; }
+}
+
+.intro-title {
+    font-size: 2.5rem;
+    color: var(--text-main);
+    letter-spacing: 2px;
+    margin-bottom: 10px;
+}
+
+.intro-subtitle {
+    font-size: 1.2rem;
+    color: var(--secondary-color);
+    margin-bottom: 30px;
+    font-family: monospace;
+    white-space: nowrap;
+    overflow: hidden;
+    border-right: 2px solid var(--secondary-color);
+    width: 0;
+    animation: typingIntro 2s steps(40, end) forwards;
+}
+
+@keyframes typingIntro {
+    to { width: 100%; }
+}
+
+.loading-bar-container {
+    width: 300px; height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+}
+
+.loading-bar {
+    width: 0%; height: 100%;
+    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    box-shadow: 0 0 15px var(--primary-color);
+    animation: loadBar 2.5s ease-out forwards;
+}
+
+@keyframes loadBar {
+    0% { width: 0%; }
+    80% { width: 90%; }
+    100% { width: 100%; }
 }
