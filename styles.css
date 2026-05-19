@@ -829,3 +829,89 @@ body.no-scroll { overflow: hidden; }
     80% { width: 90%; }
     100% { width: 100%; }
 }
+
+/* --- Animated Bookmark Tag --- */
+.animated-bookmark {
+    position: absolute;
+    top: -40px;
+    left: -40px;
+    width: 50px;
+    height: 130px;
+    z-index: 10;
+    transform-origin: top center;
+    animation: swingBookmark 4s infinite ease-in-out;
+    cursor: pointer;
+}
+
+.bookmark-pin {
+    width: 14px;
+    height: 14px;
+    background: #ff0055;
+    border-radius: 50%;
+    position: absolute;
+    top: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+    box-shadow: 0 0 15px #ff0055, inset 0 0 5px rgba(0,0,0,0.6);
+}
+
+.bookmark-pin::after {
+    content: '';
+    position: absolute;
+    top: 3px; left: 3px;
+    width: 4px; height: 4px;
+    background: rgba(255,255,255,0.6);
+    border-radius: 50%;
+}
+
+.bookmark-ribbon {
+    position: absolute;
+    top: 10px;
+    left: 0;
+    width: 100%;
+    height: 100px;
+    background: linear-gradient(180deg, var(--primary-color), var(--secondary-color));
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 85%, 0 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    filter: drop-shadow(0 10px 15px rgba(0,242,254,0.4));
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.4s;
+}
+
+.bookmark-ribbon span {
+    color: #fff;
+    font-weight: 900;
+    font-size: 0.95rem;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    transform: rotate(180deg);
+    letter-spacing: 2px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+@keyframes swingBookmark {
+    0%, 100% { transform: rotate(8deg); }
+    50% { transform: rotate(-8deg); }
+}
+
+/* On hover or click (pulled class) wobble/move */
+.animated-bookmark:hover .bookmark-ribbon {
+    transform: translateY(15px) scale(1.05);
+    filter: drop-shadow(0 15px 25px rgba(0,242,254,0.6)) brightness(1.2);
+}
+
+.animated-bookmark.pulled .bookmark-ribbon {
+    transform: translateY(30px) scale(1.1);
+    background: linear-gradient(180deg, var(--accent-color), var(--secondary-color));
+    animation: wobbleTap 0.5s ease-in-out;
+}
+
+@keyframes wobbleTap {
+    0% { transform: translateY(15px) rotate(0deg); }
+    25% { transform: translateY(30px) rotate(-10deg); }
+    50% { transform: translateY(30px) rotate(10deg); }
+    75% { transform: translateY(30px) rotate(-5deg); }
+    100% { transform: translateY(30px) rotate(0deg); }
+}
