@@ -33,24 +33,93 @@ window.addEventListener('scroll', () => {
 
 /* --- Custom Cursor --- */
 const cursor = document.querySelector('.cursor');
-const trail = document.querySelector('.cursor-trail');
-let mx = 0, my = 0;
+const tubeCanvas = document.getElementById('tube-canvas');
+const ctx = tubeCanvas ? tubeCanvas.getContext('2d') : null;
+
+let mouseX = window.innerWidth / 2;
+let mouseY = window.innerHeight / 2;
+let cursorX = mouseX;
+let cursorY = mouseY;
+
+let tubeNodes = [];
+const NUM_NODES = 40;
+if (tubeCanvas) {
+    tubeCanvas.width = window.innerWidth;
+    tubeCanvas.height = window.innerHeight;
+    for (let i = 0; i < NUM_NODES; i++) {
+        tubeNodes.push({ x: mouseX, y: mouseY });
+    }
+    window.addEventListener('resize', () => {
+        tubeCanvas.width = window.innerWidth;
+        tubeCanvas.height = window.innerHeight;
+    });
+}
 
 document.addEventListener('mousemove', e => {
-    mx = e.clientX; my = e.clientY;
-    
-    // Update main cursor instantly
-    cursor.style.left = mx + 'px';
-    cursor.style.top = my + 'px';
-    
-    // Update trail (CSS transition handles the smooth delay)
-    trail.style.left = mx + 'px';
-    trail.style.top = my + 'px';
+    mouseX = e.clientX;
+    mouseY = e.clientY;
 });
 
-document.querySelectorAll('a, button, .skill-tags span, .project-card, .social-icon, .info-item, .cert-card, .hamburger, .service-card').forEach(el => {
-    el.addEventListener('mouseenter', () => cursor.classList.add('hover'));
-    el.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
+let isHovering = false;
+let currentPrimary = '#00f2fe';
+let currentSecondary = '#BD00FF';
+
+function animateCursor() {
+    // Main cursor lerp
+    cursorX += (mouseX - cursorX) * 0.8;
+    cursorY += (mouseY - cursorY) * 0.8;
+    if (cursor) cursor.style.transform = `translate3d(calc(${cursorX}px - 50%), calc(${cursorY}px - 50%), 0)`;
+
+    // Tube canvas lerp
+    if (ctx && tubeNodes.length > 0) {
+        ctx.clearRect(0, 0, tubeCanvas.width, tubeCanvas.height);
+        
+        // Node 0 follows mouse tightly
+        tubeNodes[0].x += (mouseX - tubeNodes[0].x) * 0.7;
+        tubeNodes[0].y += (mouseY - tubeNodes[0].y) * 0.7;
+        
+        // Remaining nodes follow previous node with tight elasticity
+        for (let i = 1; i < NUM_NODES; i++) {
+            tubeNodes[i].x += (tubeNodes[i - 1].x - tubeNodes[i].x) * 0.5;
+            tubeNodes[i].y += (tubeNodes[i - 1].y - tubeNodes[i].y) * 0.5;
+        }
+
+        if (!isHovering) {
+            for (let i = 0; i < NUM_NODES; i++) {
+                let progress = 1 - (i / (NUM_NODES - 1)); 
+                
+                ctx.beginPath();
+                // Draw overlapping filled circles instead of lines. 
+                // This guarantees perfect smoothness and creates a beautiful dotted trail if moved very fast.
+                let radius = 6 * Math.pow(progress, 1.5); 
+                if (radius > 0.1) {
+                    ctx.arc(tubeNodes[i].x, tubeNodes[i].y, radius, 0, Math.PI * 2);
+                    
+                    ctx.fillStyle = currentPrimary;
+                    ctx.shadowBlur = 12 * progress;
+                    ctx.shadowColor = currentPrimary;
+                    ctx.globalAlpha = progress * 0.9;
+                    
+                    ctx.fill();
+                }
+            }
+            ctx.globalAlpha = 1;
+        }
+    }
+
+    requestAnimationFrame(animateCursor);
+}
+animateCursor();
+
+document.querySelectorAll('a, button, .skill-tags span, .project-card, .social-icon, .info-item, .cert-card, .hamburger, .service-card, .theme-toggle').forEach(el => {
+    el.addEventListener('mouseenter', () => {
+        if(cursor) cursor.classList.add('hover');
+        isHovering = true;
+    });
+    el.addEventListener('mouseleave', () => {
+        if(cursor) cursor.classList.remove('hover');
+        isHovering = false;
+    });
 });
 
 /* --- Typewriter Effect --- */
@@ -264,4 +333,53 @@ function updateThemeIcon(theme) {
             themeIcon.className = 'fas fa-sun';
         }
     }
+    // Update cached colors for cursor performance
+    setTimeout(() => {
+        currentPrimary = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim() || '#00f2fe';
+        currentSecondary = getComputedStyle(document.documentElement).getPropertyValue('--secondary-color').trim() || '#BD00FF';
+    }, 50);
 }
+
+/* --- Robot Companion Logic --- */
+const robotCompanion = document.getElementById('robot-companion');
+let robotTimeout;
+let currentRobotX = -100;
+
+document.addEventListener('click', (e) => {
+    if (!robotCompanion) return;
+    
+    // Ignore clicks on navbar items if necessary, but it's fun to have it everywhere
+    const targetX = e.pageX;
+    const targetY = e.pageY;
+
+    robotCompanion.style.opacity = '1';
+    
+    // Flip robot based on movement direction
+    if (targetX < currentRobotX) {
+        robotCompanion.style.transform = 'translate(-50%, -100%) scaleX(-1)';
+    } else {
+        robotCompanion.style.transform = 'translate(-50%, -100%) scaleX(1)';
+    }
+
+    // Move robot (offset so it stands on the click point)
+    robotCompanion.style.left = `${targetX + 15}px`;
+    robotCompanion.style.top = `${targetY}px`;
+    currentRobotX = targetX;
+
+    // Start walking animation
+    robotCompanion.classList.remove('robot-tapping');
+    robotCompanion.classList.add('robot-walking');
+
+    clearTimeout(robotTimeout);
+    
+    // Stop walking and tap after transition finishes (600ms matching CSS)
+    robotTimeout = setTimeout(() => {
+        robotCompanion.classList.remove('robot-walking');
+        robotCompanion.classList.add('robot-tapping');
+        
+        // Let it rest for a bit then fade out
+        setTimeout(() => {
+            robotCompanion.style.opacity = '0';
+        }, 2500);
+    }, 600);
+});

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anti-Gravity Mouse Trail</title>
+    <style>
+        /* --- Reset & Global --- */
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: radial-gradient(circle at center, #1b0b3b 0%, #050212 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #fff;
+            cursor: none; /* Hide default cursor */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        /* --- Stylish Heading --- */
+        .heading {
+            font-size: clamp(2rem, 5vw, 5rem);
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            background: linear-gradient(135deg, #00f2fe, #BD00FF, #ff007a);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            pointer-events: none;
+            z-index: 10;
+            text-align: center;
+            animation: shine 5s linear infinite;
+            text-shadow: 0px 10px 30px rgba(189, 0, 255, 0.2);
+        }
+
+        @keyframes shine {
+            to { background-position: 200% center; }
+        }
+
+        /* --- Custom Cursor Head --- */
+        .cursor {
+            position: fixed;
+            top: 0; left: 0;
+            width: 22px; height: 22px;
+            background: #fff;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 15px #00f2fe, 0 0 30px #00f2fe, inset 0 0 5px #000;
+            mix-blend-mode: screen;
+            will-change: transform;
+        }
+
+        /* --- Particle Styles --- */
+        .particle {
+            position: fixed;
+            top: 0; left: 0;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9998;
+            /* Animation relies on CSS variables injected via JS */
+            animation: antiGravity var(--duration) cubic-bezier(0.25, 1, 0.5, 1) forwards;
+            will-change: transform, opacity;
+        }
+
+        /* Anti-Gravity Animation: Floats UP and drifts horizontally */
+        @keyframes antiGravity {
+            0% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+            100% {
+                /* Floating upward by 150px to 250px and drifting left/right */
+                transform: translate(calc(-50% + var(--drift)), calc(-50% - var(--float-height))) scale(0);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h1 class="heading">Anti-Gravity<br>Mouse Trail</h1>
+    
+    <div class="cursor"></div>
+
+    <script>
+        const cursor = document.querySelector('.cursor');
+        let mouseX = window.innerWidth / 2;
+        let mouseY = window.innerHeight / 2;
+        let cursorX = mouseX;
+        let cursorY = mouseY;
+
+        // Space/Cyberpunk Color Palette for Particles
+        const colors = ['#00f2fe', '#BD00FF', '#ff007a', '#00ff88', '#fff'];
+
+        document.addEventListener('mousemove', e => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            
+            // Create 1 or 2 particles per mouse move for a dense trail
+            createParticle(mouseX, mouseY);
+            if (Math.random() > 0.5) {
+                createParticle(mouseX, mouseY);
+            }
+        });
+
+        // Smooth Lerp for the main glowing cursor head
+        function animateCursor() {
+            cursorX += (mouseX - cursorX) * 0.4;
+            cursorY += (mouseY - cursorY) * 0.4;
+            cursor.style.transform = `translate3d(calc(${cursorX}px - 50%), calc(${cursorY}px - 50%), 0)`;
+            requestAnimationFrame(animateCursor);
+        }
+        animateCursor();
+
+        function createParticle(x, y) {
+            const particle = document.createElement('div');
+            particle.classList.add('particle');
+            
+            // Random size between 4px and 12px
+            const size = Math.random() * 8 + 4; 
+            particle.style.width = `${size}px`;
+            particle.style.height = `${size}px`;
+            
+            // Start exactly at the mouse position
+            particle.style.left = `${x}px`;
+            particle.style.top = `${y}px`;
+            
+            // Random color with glowing box-shadow
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            particle.style.background = color;
+            particle.style.boxShadow = `0 0 ${size * 2}px ${color}`;
+            
+            // Randomize anti-gravity physics
+            const drift = (Math.random() - 0.5) * 120; // Drifts left or right up to 60px
+            const floatHeight = Math.random() * 150 + 100; // Floats up 100px to 250px
+            const duration = Math.random() * 0.8 + 0.6; // Lasts 0.6s to 1.4s
+
+            // Inject CSS variables for the animation keyframes
+            particle.style.setProperty('--drift', `${drift}px`);
+            particle.style.setProperty('--float-height', `${floatHeight}px`);
+            particle.style.setProperty('--duration', `${duration}s`);
+            
+            document.body.appendChild(particle);
+            
+            // Optimize performance: Remove particle from DOM after animation finishes
+            setTimeout(() => {
+                particle.remove();
+            }, duration * 1000);
+        }
+    </script>
+</body>
+</html>
