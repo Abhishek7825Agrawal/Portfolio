@@ -231,7 +231,37 @@ window.addEventListener('scroll', () => {
         if (window.scrollY >= sec.offsetTop - 200) current = sec.getAttribute('id');
     });
     navLinkEls.forEach(a => {
-        a.style.color = a.getAttribute('href') === '#' + current ? '#fff' : '';
+        a.style.color = a.getAttribute('href') === '#' + current ? 'var(--text-main)' : '';
         a.style.background = a.getAttribute('href') === '#' + current ? 'rgba(0,242,254,0.15)' : '';
     });
 });
+
+/* --- Theme Toggle Logic --- */
+const themeToggle = document.getElementById('theme-toggle');
+const themeIcon = document.getElementById('theme-icon');
+
+// Check saved theme
+const savedTheme = localStorage.getItem('theme') || 'dark';
+document.documentElement.setAttribute('data-theme', savedTheme);
+updateThemeIcon(savedTheme);
+
+if (themeToggle) {
+    themeToggle.addEventListener('click', () => {
+        let currentTheme = document.documentElement.getAttribute('data-theme');
+        let newTheme = currentTheme === 'light' ? 'dark' : 'light';
+        
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        updateThemeIcon(newTheme);
+    });
+}
+
+function updateThemeIcon(theme) {
+    if (themeIcon) {
+        if (theme === 'light') {
+            themeIcon.className = 'fas fa-moon';
+        } else {
+            themeIcon.className = 'fas fa-sun';
+        }
+    }
+}
